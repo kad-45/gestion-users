@@ -8,5 +8,6 @@
 </head>
 <body>
   <h1>Hello {{ name|capitalize }} {{ firstname|capitalize }} comment allez vous ? !!</h1>
+  <img src="{{ asset('assets/images/') ~ path | defaultImage }}" alt="">
 </body>
 </html>

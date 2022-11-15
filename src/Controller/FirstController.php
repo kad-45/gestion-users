@@ -31,7 +31,8 @@ class FirstController extends AbstractController
         //dd($request);
         return $this->render('first/hello.html.twig', [
             'name' => $name,
-            'firstname' => $firstname
+            'firstname' => $firstname,
+            'path' => '           '
            
         ]);
     }
