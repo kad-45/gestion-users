@@ -10,6 +10,12 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class FirstController extends AbstractController
 {
+    #[Route('/template', name: 'template')]
+    public function template()
+    {
+        return $this->render('template.html.twig');
+    }
+
     #[Route('/order/{maVar}', name: 'test.order.route')]
     public function testOrderRoute($maVar)
     {
