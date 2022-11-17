@@ -22,7 +22,7 @@ class FirstController extends AbstractController
         return new Response(content: "<html><body>$maVar</body></html>");
     }
     
-    #[Route('/first', name: 'app_first')]
+    #[Route('/first', name: 'first')]
     public function index(): Response
     {
         return $this->render('first/index.html.twig', [
@@ -31,14 +31,14 @@ class FirstController extends AbstractController
         ]);
     }
 
-    #[Route('/sayHello/{name?World}/{firstname?!}', name: 'say.hello')]
+    //#[Route('/sayHello/{name?World}/{firstname?!}', name: 'say.hello')]
     public function sayHello(Request $request, $name, $firstname): Response
     {
         //dd($request);
         return $this->render('first/hello.html.twig', [
             'name' => $name,
-            'firstname' => $firstname,
-            'path' => '           '
+            'firstname' => $firstname
+            //'path' => '           '
            
         ]);
     }

@@ -1,15 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{firstname}} {{name}}</title>
-</head>
-<body>
-    <div>
-    <h1>With love {{firstname}} {{name}}</h1>
+{% extends "template.html.twig" %}
+{% block title %}
+         {{firstname}} {{name}}
+{% endblock %}
+{% block body %}
+<div class="alert alert-success">
+        <h1>With love {{firstname}} {{name}}</h1>
         <p>Bonjour Kad Symfony 6</p>
-    </div>
-</body>
-</html>
+        <p>Mon url absolue est : {{ url("first") }}</p>
+</div>
+{% endblock %}
+   

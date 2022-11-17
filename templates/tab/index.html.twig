@@ -1,19 +1,11 @@
+{% extends "template.html.twig" %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="{{ asset('node_modules/bootstrap/dist/css/bootstrap.css') }}">
-</head>
-<body>
+{% block body %}
     <table class="table">
         {% for note in notes %}
             
         <tr>
-            <td>{{ note }}</td>
+            <td class='table-{% if loop.index is odd%}danger{% else %}success{% endif %}'>{{ note }}</td>
         </tr>
         {% endfor %}
     </table>
@@ -22,5 +14,4 @@
         <p>Note minimale : {{ min(notes)}}</p>
         <p>Note maximale : {{ max(notes) }}</p>
     </div>
-</body>
-</html>
+{% endblock %}
