@@ -4,11 +4,11 @@ namespace App\Entity;
 
 use App\Repository\PersonneRepository;
 use App\Traits\TimeStampTrait;
-use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: PersonneRepository::class)]
 #[ORM\HasLifecycleCallbacks]
@@ -18,31 +18,50 @@ class Personne
     
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[ORM\Column(type:'integer')]
+    private ?int $id;
 
-    #[ORM\Column(length: 50)]
-    private ?string $firstname = null;
+    #[ORM\Column(type: 'string', length: 50)]
+    #[Assert\NotBlank(message:"Veuillez renseigner ce champ")]
+    #[Assert\Length(
+        min: 4, 
+        max: 12, 
+        minMessage:"Veuillez renseigner au moins 4 caractères",
+        maxMessage:"Veuillez renseigner au plus 12 caractères"
+        )]
+    private ?string $firstname;
 
-    #[ORM\Column(length: 50)]
-    private ?string $name = null;
+    #[ORM\Column(type: 'string', length: 50)]
+    #[Assert\NotBlank(message:"Veuillez renseigner ce champ")]
+    #[Assert\Length(
+        min: 4, 
+        max: 20, 
+        minMessage:"Veuillez renseigner au moins 4 caractères",
+        maxMessage:"Veuillez renseigner au plus 20 caractères"
+        )]
+
+    protected ?string $name;
 
     #[ORM\Column(type: Types::SMALLINT)]
-    private ?int $age = null;
+    private ?int $age;
 
-    #[ORM\ManyToMany(targetEntity: Hobby::class)]
-    private Collection $hobbies;
+     
+    #[ORM\OneToOne(targetEntity: Profil::class, inversedBy: "personne", cascade:["persist", "remove"])]
+     
+    private $profil;
+
+    #[ORM\ManyToMany(targetEntity: Hobies::class)]
+    private Collection $hobies;
 
     #[ORM\ManyToOne(targetEntity: Job::class, inversedBy: 'personnes')]
-    private ?Job $job = null;
+    private ?Job $job;
 
-    #[ORM\OneToOne(inversedBy: 'personne', cascade: ['persist', 'remove'])]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Profile $profile = null;
+    #[ORM\Column(type:'string', length: 255, nullable: true)]
+    private ?string $image;
 
     public function __construct()
     {
-        $this->hobbies = new ArrayCollection();
+        $this->hobies = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -86,26 +105,38 @@ class Personne
         return $this;
     }
 
-    /**
-     * @return Collection<int, Hobby>
-     */
-    public function getHobbies(): Collection
+    public function getProfil(): ?Profil
     {
-        return $this->hobbies;
+        return $this->profil;
     }
 
-    public function addHobby(Hobby $hobby): self
+    public function setProfil(?Profil $profil): self
     {
-        if (!$this->hobbies->contains($hobby)) {
-            $this->hobbies->add($hobby);
+        $this->profil = $profil;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Hobies>
+     */
+    public function getHobies(): Collection
+    {
+        return $this->hobies;
+    }
+
+    public function addHobies(Hobies $hobies): self
+    {
+        if (!$this->hobies->contains($hobies)) {
+            $this->hobies->add($hobies);
         }
 
         return $this;
     }
 
-    public function removeHobby(Hobby $hobby): self
+    public function removeHobies(Hobies $hobies): self
     {
-        $this->hobbies->removeElement($hobby);
+        $this->hobies->removeElement($hobies);
 
         return $this;
     }
@@ -120,16 +151,16 @@ class Personne
         $this->job = $job;
 
         return $this;
+    } 
+
+    public function getImage(): ?string
+    {
+        return $this->image;
     }
 
-    public function getProfile(): ?Profile
+    public function setImage(?string $image): self
     {
-        return $this->profile;
-    }
-
-    public function setProfile(Profile $profile): self
-    {
-        $this->profile = $profile;
+        $this->image = $image;
 
         return $this;
     }

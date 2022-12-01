@@ -16,13 +16,13 @@ class Job
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[ORM\Column(type:'integer')]
+    private ?int $id;
 
-    #[ORM\Column(length: 255)]
-    private ?string $designation = null;
+    #[ORM\Column(type:'string', length: 255)]
+    private ?string $designation;
 
-    #[ORM\OneToMany(mappedBy: 'job', targetEntity: Personne::class)]
+    #[ORM\OneToMany(targetEntity: Personne::class, mappedBy: 'job')]
     private Collection $personnes;
 
     public function __construct()
@@ -75,5 +75,10 @@ class Job
         }
 
         return $this;
+    }
+
+    public function __toString()
+    {
+        return $this->designation;
     }
 }
