@@ -3,13 +3,18 @@
 namespace App\Controller;
 
 use App\Entity\Personne;
+use App\Event\AddPersonneEvent;
+use App\Event\ListAllPersonnesEvent;
 use App\Form\PersonneType;
 use App\Service\Helpers;
 use App\Service\MailerService;
+use App\Service\PdfService;
 use App\Service\UploaderService;
 use Doctrine\Persistence\ManagerRegistry;
 use Psr\Log\LoggerInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,10 +22,13 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
-#[Route('/personne')]
+#[Route('/personne'), IsGranted('ROLE_USER')]
 class PersonneController extends AbstractController
 {
-    public function __construct(private LoggerInterface $logger, private Helpers $helpers)
+    public function __construct(
+        private LoggerInterface $logger, 
+        private Helpers $helpers,
+        private EventDispatcherInterface $dispacher)
     {
         
     }
@@ -36,6 +44,15 @@ class PersonneController extends AbstractController
             'personnes' => $personnes
         ]);
         
+    }
+
+    #[Route('/pdf/{id}', name: 'personne.pdf')]
+    public function generatePdfPersonne(Personne $personne = null, PdfService $pdf)
+    {
+        $html = $this->render('personne/detail.html.twig', [
+        'personne' => $personne
+        ]);
+        $pdf->showPdfFile($html);
     }
 
     #[Route('/alls/age/{ageMin}/{ageMax}', name: 'personne.list.age')]
@@ -60,17 +77,20 @@ class PersonneController extends AbstractController
         ]);
     }
 
-    #[Route('/alls/{page?1}/{nbr?36}', name: 'personne.list.alls')]
+    #[Route('/alls/{page?1}/{nbr?36}', name: 'personne.list.alls'), IsGranted("ROLE_USER")]
     public function indexAlls(ManagerRegistry $doctrine, $page, $nbr): Response
     {
         
-        echo $this->helpers->sayCc();
+        //echo $this->helpers->sayCc();
         
         $repository = $doctrine->getRepository(persistentObject:Personne::class);
         $nbPersonne = $repository->count([]);
         $nbrPage = ceil(num:$nbPersonne / $nbr);
         $personnes = $repository->findBy([], [], $nbr, offset:($page - 1) * $nbr);
-        
+        //On istancier L'objet qu'on va dispatcher
+        $listAllPersonneEvent = new ListAllPersonnesEvent(count($personnes));
+        //On dispatch l'objet qui est notre evenement
+        $this->dispacher->dispatch($listAllPersonneEvent, eventName: ListAllPersonnesEvent::LIST_ALL_PERSONNE_EVENT); 
         return $this->render('personne/index.html.twig', [
             'personnes' => $personnes,
             'isPaginated' => true,
@@ -101,9 +121,10 @@ class PersonneController extends AbstractController
     }
     
     
-    #[Route('/edit/{id?0}', name: 'personne.edit')]
+    #[Route('/edit/{id?0}', name: 'personne.edit'), IsGranted('ROLE_ADMIN')]
     public function addPersonne(Personne $personne = null, ManagerRegistry $doctrine, Request $request, UploaderService $uploaderService, MailerService $mailer): Response
     {
+        $this->denyAccessUnlessGranted(attribute:'ROLE_ADMIN');
         $new = false;
         //$this->getDoctrine();version<=5
         if (!$personne) {
@@ -130,22 +151,28 @@ class PersonneController extends AbstractController
             
                 $personne->setImage($uploaderService->uploadFile($photo, $directory));
             }
+            if ($new) {
+                $message = "a été ajouté avec succès!";
+                $personne->setCreatedBy($this->getUser());
+                
+            } else {
+                $message = "a été mis à jour avec succès!";
+
+            }
                 $manager = $doctrine->getManager();
                 $manager->persist($personne);
                 
                 $manager->flush();
                 //Afficher un message de succés
-
+                
                 if ($new) {
-                    $message = "a été ajouté avec succès!";
-                    
-                } else {
-                    $message = "a été mis à jour avec succès!";
-  
+                    //On a créer notre événement à dispatcher
+                    $addPersonneEvent = new AddPersonneEvent($personne);
+                    //On va maintenant dispatcher cet evenement
+                    $this->dispacher->dispatch($addPersonneEvent, eventName:AddPersonneEvent::ADD_PERSONNE_EVENT);
                 }
-                $mailMessage = $personne->getFirstname(). ' '. $personne->getName(). ' '. $message;
+                
                 $this->addFlash(type:'success', message: $personne->getName(). " ". $personne->getFirstname()." ". $message);
-                $mailer->sendEmail(content: $mailMessage);
 
                 //Rediriger vers la liste des personnes
                 return $this->redirectToRoute('personne.list');
@@ -161,7 +188,7 @@ class PersonneController extends AbstractController
         
     }
 
-    #[Route('/delete/{id<\d+>}', name:'personne.delete')]
+    #[Route('/delete/{id<\d+>}', name:'personne.delete'), IsGranted(attribute:'ROLE_ADMIN')]
     public function deletePersonne(Personne $personne = null, ManagerRegistry $doctrine, $id):RedirectResponse {
         //Récupérer la personne
         if ($personne) {

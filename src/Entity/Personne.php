@@ -59,6 +59,9 @@ class Personne
     #[ORM\Column(type:'string', length: 255, nullable: true)]
     private ?string $image;
 
+    #[ORM\ManyToOne(inversedBy: 'personnes')]
+    private ?User $createdBy = null;
+
     public function __construct()
     {
         $this->hobies = new ArrayCollection();
@@ -161,6 +164,18 @@ class Personne
     public function setImage(?string $image): self
     {
         $this->image = $image;
+
+        return $this;
+    }
+
+    public function getCreatedBy(): ?User
+    {
+        return $this->createdBy;
+    }
+
+    public function setCreatedBy(?User $createdBy): self
+    {
+        $this->createdBy = $createdBy;
 
         return $this;
     }

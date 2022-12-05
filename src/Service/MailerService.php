@@ -7,9 +7,10 @@ use Symfony\Component\Mime\Email;
 
 class MailerService
 {
-  public function __construct(private MailerInterface $mailer) 
+  private $replayTo;
+  public function __construct(private MailerInterface $mailer, $replayTo) 
   {
-    
+    $this->replayTo = $replayTo;
   }
   public function sendEmail(
     $to = 'mathkr142@gmail.com', 
@@ -17,11 +18,11 @@ class MailerService
     $subject = 'Time for Symfony Mailer!'): void
     {
         $email = (new Email())
-            ->from('kader.math142@example.com')
+            ->from('kader.math142@hotmail.fr')
             ->to($to)
             //->cc('cc@example.com')
             //->bcc('bcc@example.com')
-            //->replyTo('fabien@example.com')
+            ->replyTo($this->replayTo)
             //->priority(Email::PRIORITY_HIGH)
             ->subject($subject)
             //->text('Sending emails is fun again!')
